@@ -1,23 +1,27 @@
-testName="plykin"
+testName="kuznetsov"
 include("../$testName.jl")
 using PyPlot
-s0 = [0.72, 1.9]
+#s0 = [0.72, 1.9]
 #function plot_attractor()
 
-	n_testpoints = 5000
+	n_testpoints = 500
 	n_times = 6
-	n_steps = 4000
-	u0 = -3.0 + 6.0*rand(2,n_testpoints)
-	u = zeros(2,n_testpoints,n_times)
+	n_steps = n_poincare
+	u0 = rand(d,n_testpoints)
+	u0 .*= (boundaries[d+1:2*d]-boundaries[1:d])
+	u0 .+= boundaries[1:d]
+	u = zeros(d,n_testpoints,n_times)
 	[u[:,:,j] = copy(u0) for j = 1:n_times]
 	t = 0.0
 	subplot(331)
 	plot(u0[1,:],u0[2,:],"o")
-	for n = 1:n_times
-		for i = 1:n_testpoints
-			u[:,i,n] = Step(u[:,i,n],s0,n_steps,t)
+	for i = 1:n_testpoints
+		u[:,i,1] = Step(u[:,i,1],s0,100*n_steps,t)
+		t = 100*n_poincare*dt
+		for n = 2:n_times
+			u[:,i,n] = Step(u[:,i,n-1],s0,100*n_steps,t)
+			t += 100*n_poincare*dt
 		end
-		#t += dt*n_steps
 		t = 0.0
 	end
 	subplot(332)

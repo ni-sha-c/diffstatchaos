@@ -1,4 +1,4 @@
-dt = 5.e-6
+dt = 5.e-8
 function Step(u0::Array{Float64,1},s::Array{Float64,1},n::Int64,
 			t0::Float64=0.0)
 	u = copy(u0)
