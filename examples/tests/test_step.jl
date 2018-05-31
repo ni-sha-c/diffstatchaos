@@ -4,7 +4,7 @@ using PyPlot
 #s0 = [0.72, 1.9]
 #function plot_attractor()
 
-	n_testpoints = 500
+	n_testpoints = 5000
 	n_times = 6
 	n_steps = n_poincare
 	u0 = rand(d,n_testpoints)
@@ -39,6 +39,23 @@ using PyPlot
 	subplot(336)
 	plot(u[1,:,5],u[2,:,5],"o")
 
+
+	r = zeros(n_testpoints)
+	theta = zeros(n_testpoints)
+	phi = zeros(n_testpoints)
+	x = zeros(n_testpoints)
+	y = zeros(n_testpoints)
+	for i = 1:n_testpoints
+		r[i],theta[i],phi[i] = convert_to_spherical(u[:,i,6]) 
+		x[i],y[i] = stereographic_projection(u[:,i,6])
+	end
+	figure()		
+	subplot(121)		
+	plot(phi,theta,"ko")
+	xlim([-pi,pi])
+	ylim([0.,pi])
+	subplot(122)
+	plot(x,y,"ro")
 
 
 #end
