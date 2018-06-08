@@ -8,8 +8,7 @@ boundaries[2] = -1.0
 boundaries[3] = -1.0
 T = 6.0
 n_poincare = ceil(Int64,T/dt)
-function Step(u0::Array{Float64,1},s::Array{Float64,1},n::Int64,
-			 t0::Float64)
+function Step(u0::Array{Float64,1},s::Array{Float64,1},n::Int64)
 
 	u = copy(u0)
 
@@ -25,9 +24,8 @@ function Step(u0::Array{Float64,1},s::Array{Float64,1},n::Int64,
 		r2 = x^2 + y^2 + z^2	
 		r = sqrt(r2)
 		
-		t = (t0 + (i-1)*dt)%T
-		σ = diff_rot_freq(t)
-		a = rot_freq(t)		
+		σ = diff_rot_freq(u[4])
+		a = rot_freq(u[4])		
 	
 		coeff1 = σ*pi*0.5*(z*sqrt(2) + 1)
 		coeff2 = s[1]*(1. - σ*σ - a*a)
@@ -42,6 +40,8 @@ function Step(u0::Array{Float64,1},s::Array{Float64,1},n::Int64,
 				coeff3*y)
 
 		u[3] += dt*(-0.5*a*pi*x + coeff3*z)
+
+		u[4] = (u[4] + dt)%T
 
 	end 
 
@@ -77,13 +77,12 @@ end
 
 function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 					 s::Array{Float64,1},
-					 ds::Array{Float64,1},
-					 t::Float64)
+					 ds::Array{Float64,1})
 
 	x = u[1]
 	y = u[2]
 	z = u[3]
-
+	t = u[4]
 	dx = v0[1]
 	dy = v0[2]
 	dz = v0[3]
@@ -137,7 +136,8 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 				dcoeff3_dx*z*dx + 
 				dcoeff3_dy*z*dy + 
 				dcoeff3_dz*z*dz + 
-				coeff3*dz)	 
+				coeff3*dz)
+	 
 
 	return v
 
@@ -146,37 +146,135 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 end
 
 function rot_freq(t::Float64)
-
-	if(t >= 2.0 && t < 3.0)
-		return -1.0
-	end
-
-	if(t >= 5.0 && t < 6.0)
-		return 1.0
-	end
 	
-	return 0.0
+	a0 = -1.0
+	a1 = 0.0
+	a2 = 1.0
+
+	c0 = 2.0
+	c1 = 3.0
+	c2 = 5.0
+	c3 = 6.0 
+	c4 = 0.0
+
+	slope = 20.0
+	est = exp(slope*t)
+	esc0 = exp(slope*c0)
+	esc1 = exp(slope*c1)
+	esc2 = exp(slope*c2)
+	esc3 = exp(slope*c3)
+	esc4 = exp(slope*c4)
+
+	fn0 = (a1*esc0 + a0*est)/(esc0 + est)	
+	fn1 = (a0*esc1 + a1*est)/(esc1 + est)
+	fn2 = (a1*esc2 + a2*est)/(esc2 + est)
+	fn3 = (a2*esc3 + a1*est)/(esc3 + est)
+	fn4 = (a2*esc4 + a1*est)/(esc4 + est)
+
+	return fn0 + fn1 + fn2 + fn3 + fn4
+
+
+
 
 end
 
 function diff_rot_freq(t::Float64)
 
-	if(t >= 1.0 && t < 2.0)
-		return -1.0
-	end
+	a0 = -1.0
+	a1 = 0.0
+	a2 = 1.0
 
-	if(t >= 4.0 && t < 5.0)
-		return 1.0
-	end
+	c0 = 1.0
+	c1 = 2.0
+	c2 = 4.0
+	c3 = 5.0 
 
-	return 0.0
+	slope = 20.0
+	est = exp(slope*t)
+	esc0 = exp(slope*c0)
+	esc1 = exp(slope*c1)
+	esc2 = exp(slope*c2)
+	esc3 = exp(slope*c3)
+	
+	fn0 = (a1*esc0 + a0*est)/(esc0 + est)	
+	fn1 = (a0*esc1 + a1*est)/(esc1 + est)
+	fn2 = (a1*esc2 + a2*est)/(esc2 + est)
+	fn3 = (a2*esc3 + a1*est)/(esc3 + est)
+
+	return fn0 + fn1 + fn2 + fn3
+
+end
+
+function ddiff_rot_freq_dt(t::Float64)
+	
+	a0 = -1.0
+	a1 = 0.0
+	a2 = 1.0
+
+	c0 = 1.0
+	c1 = 2.0
+	c2 = 4.0
+	c3 = 5.0 
+
+	slope = 20.0
+	est = exp(slope*t)
+	esc0 = exp(slope*c0)
+	esc1 = exp(slope*c1)
+	esc2 = exp(slope*c2)
+	esc3 = exp(slope*c3)
+
+
+	dfn0 = esc0*est*slope*(a0-a1)/(esc0 + est)/(esc0 + est)
+	dfn1 = esc1*est*slope*(a1-a0)/(esc1 + est)/(esc1 + est)
+	dfn2 = esc2*est*slope*(a2-a1)/(esc2 + est)/(esc2 + est)
+	dfn3 = esc3*est*slope*(a1-a2)/(esc3 + est)/(esc3 + est)
+
+	return dfn0 + dfn1 + dfn2 + dfn3 
 
 
 end
 
+function drot_freq_dt(t::Float64)
+	
+	a0 = -1.0
+	a1 = 0.0
+	a2 = 1.0
+
+	c0 = 2.0
+	c1 = 3.0
+	c2 = 5.0
+	c3 = 6.0 
+	c4 = 0.0
+
+	slope = 20.0
+	est = exp(slope*t)
+	esc0 = exp(slope*c0)
+	esc1 = exp(slope*c1)
+	esc2 = exp(slope*c2)
+	esc3 = exp(slope*c3)
+	esc4 = exp(slope*c4)
+
+	fn0 = (a1*esc0 + a0*est)/(esc0 + est)	
+	fn1 = (a0*esc1 + a1*est)/(esc1 + est)
+	fn2 = (a1*esc2 + a2*est)/(esc2 + est)
+	fn3 = (a2*esc3 + a1*est)/(esc3 + est)
+	fn4 = (a2*esc4 + a1*est)/(esc4 + est)
+
+	dfn0 = esc0*est*slope*(a0-a1)/(esc0 + est)/(esc0 + est)
+	dfn1 = esc1*est*slope*(a1-a0)/(esc1 + est)/(esc1 + est)
+	dfn2 = esc2*est*slope*(a2-a1)/(esc2 + est)/(esc2 + est)
+	dfn3 = esc3*est*slope*(a1-a2)/(esc3 + est)/(esc3 + est)
+	dfn4 = esc4*est*slope*(a1-a2)/(esc4 + est)/(esc4 + est)
+
+	return dfn0 + dfn1 + dfn2 + dfn3 + dfn4
+
+
+end
+
+
 function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 					 s::Array{Float64,1},
-					 dJ::Array{Float64,1},t::Float64)
+					 dJ::Array{Float64,1})
 
 
 	y0 = copy(y1)
@@ -184,7 +282,7 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 	x = u[1]
 	y = u[2]
 	z = u[3]
-	#t = u[4]
+	t = u[4]
 	
 	r2 = x^2 + y^2
 	r = sqrt(r2)
@@ -225,6 +323,9 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 			y1[2]*dt*y*dcoeff3dz + 
 			y1[3]*dt*z*dcoeff3dz + 
 			y1[3]*dt*coeff3
+
+
+	#y0[4] += y1[1]*
 		
 
 	return y0
