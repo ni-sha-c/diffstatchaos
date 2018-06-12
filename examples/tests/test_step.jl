@@ -109,12 +109,12 @@ function test_tangent()
 end
 
 #function test_testadjoint()
-	u = rand(3)
+	u = rand(4)
 	t = rand()
-	y1 = rand(3)
-	v0 = rand(3)
-	v1 = tangent_step(v0,u,s0,zeros(3),t)
-	y0 = adjoint_step(y1,u,s0,zeros(3),t)
+	y1 = rand(4)
+	v0 = rand(4)
+	v1 = tangent_step(v0,u,s0,zeros(2))
+	y0 = adjoint_step(y1,u,s0,zeros(4))
 	println(dot(v1,y1))
 	println(dot(v0,y0))	
 #end

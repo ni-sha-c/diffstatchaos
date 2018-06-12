@@ -86,6 +86,7 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 	dx = v0[1]
 	dy = v0[2]
 	dz = v0[3]
+	dtime = v0[4]
 	v = copy(v0)
 
 	σ = 0.0
@@ -287,10 +288,16 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 	r2 = x^2 + y^2
 	r = sqrt(r2)
 	σ = diff_rot_freq(t)
-	a = rot_freq(t)		
+	a = rot_freq(t)	
+	dσdt = ddiff_rot_freq_dt(t)
+	dadt = drot_freq_dt(t)
 	coeff1 = σ*pi*0.5*(z*sqrt(2) + 1)
 	coeff2 = s[1]*(1. - σ*σ - a*a)
 	coeff3 = s[2]*a*a*(1.0 - r)		
+
+	dcoeff1dt = pi*0.5*(z*sqrt(2) + 1)*dσdt
+	dcoeff2dt = s[1]*(-2.0)*(σ*dσdt + a*dadt)
+	dcoeff3dt = s[2]*(1.0 - r)*2.0*a*dadt
 
 	dcoeff1dz = σ*pi*0.5*sqrt(2)
 	dcoeff3dx = s[2]*a*a*(-x)/r 
@@ -304,8 +311,7 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 			y1[2]*dt*y*2.0*x + 
 			y1[2]*dt*dcoeff3dx*y + 
 			y1[3]*dt*(-0.5)*a*pi + 
-			y1[3]*dt*z*dcoeff3dx
-
+			y1[3]*dt*z*dcoeff3dx 	
 
 	y0[2] += y1[1]*dt*(-1.0)*coeff1 - 
 			y1[1]*dt*(-1.0)*coeff2*x*2.0*y + 
@@ -325,7 +331,15 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 			y1[3]*dt*coeff3
 
 
-	#y0[4] += y1[1]*
+	y0[4] += -1.0*y1[1]*dt*dcoeff1dt*y + 
+			 y1[1]*dt*x*y*y*dcoeff2dt + 
+			 y1[1]*dt*x*dcoeff3dt + 
+			 y1[2]*dt*0.5*x*dcoeff1dt + 
+			 y1[2]*dt*y*x*x*dcoeff2dt +
+			 y1[2]*dt*y*dcoeff3dt + 
+			 y1[3]*dt*dcoeff3dt*z + 
+			 
+
 		
 
 	return y0
