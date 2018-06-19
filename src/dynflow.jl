@@ -1,6 +1,6 @@
 include("../examples/kuznetsov.jl")
 function decompose(v,u,w0)
-
+# Need to rewrite for general case
 	rdir = [u[1],u[2],0.0]
 	zdir = [0.0, 0.0, 1.0]
 	w1 = zdir

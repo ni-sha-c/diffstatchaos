@@ -140,7 +140,11 @@ function gradFs(u::Array{Float64,1},s::Array{Float64,1})
 	dFdu[1,1] = 1.0 + dt*(-coeff2*y*y +
 					coeff3 + dcoeff3_dx)
 
-	dFdu[1,2] = 
+	dFdu[1,2] = dt*(-1.0*coeff1 - 
+					coeff2*2.0*y*x + 
+					dcoeff3_dy*x)
+
+	dFdu[1,3] = 
 	
 	
 	
