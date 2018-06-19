@@ -138,7 +138,7 @@ function gradFs(u::Array{Float64,1},s::Array{Float64,1})
 	dFdu = zeros(d,d)
 
 	dFdu[1,1] = 1.0 + dt*(-coeff2*y*y +
-					coeff3 + dcoeff3_dx)
+					coeff3 + dcoeff3_dx*x)
 
 	dFdu[1,2] = dt*(-1.0*coeff1 - 
 					coeff2*2.0*y*x + 
@@ -154,7 +154,7 @@ function gradFs(u::Array{Float64,1},s::Array{Float64,1})
 				dcoeff3_dt*x)
 
 	dFdu[2,1] = dt*(coeff1*0.5 + 	
-				coeff2*y*y + 
+				coeff2*y*2.0*x + 
 				dcoeff3_dx*y)	 
 				 
 	dFdu[2,2] = 1.0 + dt*(coeff2*x*x + 
@@ -173,6 +173,10 @@ function gradFs(u::Array{Float64,1},s::Array{Float64,1})
 	
 	dFdu[3,3] = 1.0 + dt*coeff3 + 
 				dt*dcoeff3_dz*z
+
+
+	dFdu[3,4] = dt*(-0.5*pi*x*da_dt + 
+				dcoeff3_dt*z)
 
 	dFdu[4,4] = 1.0
 
@@ -252,7 +256,7 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 				dcoeff3_dx*y*dx + 
 				dcoeff3_dy*y*dy +
 		 		dcoeff3_dz*y*dz +
-			 	coeff3*dy + dcoeff1_dt*0.5*x*dtime -
+			 	coeff3*dy + dcoeff1_dt*0.5*x*dtime +
 				dcoeff2_dt*y*x*x*dtime + 
 				dcoeff3_dt*y*dtime) 
 

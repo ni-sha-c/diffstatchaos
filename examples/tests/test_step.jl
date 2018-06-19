@@ -108,7 +108,7 @@ function test_tangent()
 
 end
 
-#function compute_jacobian()
+#function test_jacobian()
 
 
 	u0 = rand(4)
@@ -124,7 +124,7 @@ end
 				(2.0*epsi)
 
 	Jacu[:,3] = (Step(u0 + epsi*[0.0,0.0,1.0,0.0],s0,1) - 
-				Step(u0 - epsi*[1.0,0.0,0.0,0.0],s0,1))/
+				Step(u0 - epsi*[0.0,0.0,1.0,0.0],s0,1))/
 				(2.0*epsi)
 
 	Jacu[:,4] = (Step(u0 + epsi*[0.0,0.0,0.0,1.0],s0,1) - 
@@ -138,12 +138,16 @@ end
 	dFds2 = (Step(u0,s0 + epsi*[0.0,1.0],1)-Step(u0,s0
 			- epsi*[0.0,1.0],1))/(2.0*epsi)	
 
+
+	Jacana = gradFs(u0,s0)
+	println(norm(Jacu-Jacana))
+
 	
 	v0 = rand(4)
-	v0_fd = v0 + dt*Jacu*v0 
+	v0_fd = Jacu*v0 
 	v0_hand = tangent_step(v0,u0,s0,zeros(2))
 	println(norm(v0_fd - v0_hand))
-
+#=
 	v1_fd = v0_fd + dt*dFds1 
 	v1_hand = tangent_step(v0,u0,s0,[1.0,0.0])
 	println(norm(v1_fd - v1_hand))
@@ -152,7 +156,7 @@ end
 	v2_hand = tangent_step(v0,u0,s0,[0.0,2.0])
 	println(norm(v2_fd - v2_hand))
 
-
+=#
 #end
 
 function test_adjoint()
