@@ -74,6 +74,117 @@ function stereographic_projection(u::Array{Float64,1})
 	return re_part,im_part
 
 end
+function tangent_source(v0::Array{Float64,1}, u::Array{Float64,1},
+						s::Array{Float64,1}, ds::Array{Float64,1})
+
+
+	v = copy(v0)
+	v[1] += dt*(-1.0*dcoeff2_ds1*ds[1]*x*y*y + 
+				dcoeff3_ds2*ds[2]*x)
+	v[2] += dt*(dcoeff2_ds1*ds[1]*y*x*x + 
+				dcoeff3_ds2*ds[2]*y)
+	v[3] += dt*dcoeff3_ds2*ds[2]*z
+	
+
+	return v
+
+end
+function ∂F∂s(u::Array{Float64,1},s::Array{Float64,1})
+
+	dfds = zeros(d,p)
+	ds1 = [1.0, 0.0]
+	ds2 = [0.0, 1.0]
+	dfds[:,1] = tangent_source(zeros(d),u,s,ds1)
+	dfds[:,2] = tangent_source(zeros(d),u,s,ds2)
+	return dfds
+
+end
+
+function gradFs(u::Array{Float64,1},s::Array{Float64,1})
+
+	x = u[1]
+	y = u[2]
+	z = u[3]
+	t = u[4]
+
+	σ = 0.0
+	a = 0.0	
+	r2 = x^2 + y^2 + z^2	
+	r = sqrt(r2)
+		
+	t = t%T
+	
+	σ = diff_rot_freq(t)
+	a = rot_freq(t)
+	dσ_dt = ddiff_rot_freq_dt(t)
+	da_dt = drot_freq_dt(t)
+
+	coeff1 = σ*pi*0.5*(z*sqrt(2) + 1)
+	coeff2 = s[1]*(1. - σ*σ - a*a)
+	coeff3 = s[2]*a*a*(1.0 - r)		
+
+	dcoeff1_dt = pi*0.5*(z*sqrt(2) + 1)*dσ_dt
+	dcoeff2_dt = s[1]*(-2.0)*(σ*dσ_dt + a*da_dt)
+	dcoeff3_dt = s[2]*(1.0 - r)*2.0*a*da_dt
+
+
+	dcoeff1_dz = σ*pi*0.5*sqrt(2)
+	dcoeff2_ds1 = coeff2/s[1]
+	dcoeff3_ds2 = coeff3/s[2]
+	dcoeff3_dx = s[2]*a*a*(-x)/r
+	dcoeff3_dy = s[2]*a*a*(-y)/r
+	dcoeff3_dz = s[2]*a*a*(-z)/r
+		
+	dFds = zeros(d,d)
+
+	dFdu[1,1] = 1.0 + dt*(-coeff2*y*y +
+					coeff3 + dcoeff3_dx)
+
+	dFdu[1,2] = 
+	
+	
+	
+	-1.0*dcoeff1_dz*y*dz - 1.0*
+				coeff1*dy - dcoeff2_ds1*ds[1]*x*y*y - 
+			 - coeff2*x*2.0*y*dy + 
+				0.5*a*pi*dz + dcoeff3_ds2*ds[2]*x + 
+				dcoeff3_dx*x*dx + 
+				dcoeff3_dy*x*dy + 
+				dcoeff3_dz*x*dz +
+				coeff3*dx - 1.0*dcoeff1_dt*y*dtime - 
+				dcoeff2_dt*x*y*y*dtime + 
+				0.5*da_dt*pi*z*dtime + 
+				dcoeff3_dt*x*dtime)
+
+	v[2] += dt*(coeff1*0.5*dx + 
+				dcoeff1_dz*0.5*x*dz + 
+				dcoeff2_ds1*y*x*x*ds[1] + 
+				coeff2*dy*x*x + 
+				coeff2*2.0*x*dx*y + 
+				dcoeff3_ds2*ds[2]*y + 
+				dcoeff3_dx*y*dx + 
+				dcoeff3_dy*y*dy +
+		 		dcoeff3_dz*y*dz +
+			 	coeff3*dy + dcoeff1_dt*0.5*x*dtime -
+				dcoeff2_dt*y*x*x*dtime + 
+				dcoeff3_dt*y*dtime) 
+
+	v[3] += dt*(-0.5*a*pi*dx + 
+				dcoeff3_ds2*z*ds[2] + 
+				dcoeff3_dx*z*dx + 
+				dcoeff3_dy*z*dy + 
+				dcoeff3_dz*z*dz + 
+				coeff3*dz - 
+				0.5*pi*x*da_dt*dtime + 
+				dcoeff3_dt*z*dtime)
+	 
+
+	return v
+
+
+
+end
+
 
 function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 					 s::Array{Float64,1},
@@ -95,13 +206,22 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 	r = sqrt(r2)
 		
 	t = t%T
+	
 	σ = diff_rot_freq(t)
 	a = rot_freq(t)
+	dσ_dt = ddiff_rot_freq_dt(t)
+	da_dt = drot_freq_dt(t)
+
 
 	
 	coeff1 = σ*pi*0.5*(z*sqrt(2) + 1)
 	coeff2 = s[1]*(1. - σ*σ - a*a)
 	coeff3 = s[2]*a*a*(1.0 - r)		
+
+	dcoeff1_dt = pi*0.5*(z*sqrt(2) + 1)*dσ_dt
+	dcoeff2_dt = s[1]*(-2.0)*(σ*dσ_dt + a*da_dt)
+	dcoeff3_dt = s[2]*(1.0 - r)*2.0*a*da_dt
+
 
 	dcoeff1_dz = σ*pi*0.5*sqrt(2)
 	dcoeff2_ds1 = coeff2/s[1]
@@ -119,7 +239,10 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 				dcoeff3_dx*x*dx + 
 				dcoeff3_dy*x*dy + 
 				dcoeff3_dz*x*dz +
-				coeff3*dx)  
+				coeff3*dx - 1.0*dcoeff1_dt*y*dtime - 
+				dcoeff2_dt*x*y*y*dtime + 
+				0.5*da_dt*pi*z*dtime + 
+				dcoeff3_dt*x*dtime)
 
 	v[2] += dt*(coeff1*0.5*dx + 
 				dcoeff1_dz*0.5*x*dz + 
@@ -130,14 +253,18 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 				dcoeff3_dx*y*dx + 
 				dcoeff3_dy*y*dy +
 		 		dcoeff3_dz*y*dz +
-			 	coeff3*dy) 
+			 	coeff3*dy + dcoeff1_dt*0.5*x*dtime -
+				dcoeff2_dt*y*x*x*dtime + 
+				dcoeff3_dt*y*dtime) 
 
 	v[3] += dt*(-0.5*a*pi*dx + 
 				dcoeff3_ds2*z*ds[2] + 
 				dcoeff3_dx*z*dx + 
 				dcoeff3_dy*z*dy + 
 				dcoeff3_dz*z*dz + 
-				coeff3*dz)
+				coeff3*dz - 
+				0.5*pi*x*da_dt*dtime + 
+				dcoeff3_dt*z*dtime)
 	 
 
 	return v
@@ -331,13 +458,15 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 			y1[3]*dt*coeff3
 
 
-	y0[4] += -1.0*y1[1]*dt*dcoeff1dt*y + 
+	y0[4] += -1.0*y1[1]*dt*dcoeff1dt*y - 
 			 y1[1]*dt*x*y*y*dcoeff2dt + 
-			 y1[1]*dt*x*dcoeff3dt + 
+			 y1[1]*dt*x*dcoeff3dt +
+			 y1[1]*dt*0.5*pi*z*dadt +  
 			 y1[2]*dt*0.5*x*dcoeff1dt + 
 			 y1[2]*dt*y*x*x*dcoeff2dt +
 			 y1[2]*dt*y*dcoeff3dt + 
 			 y1[3]*dt*dcoeff3dt*z + 
+			 y1[3]*dt*(-0.5)*pi*x*dadt 
 			 
 
 		

@@ -108,9 +108,74 @@ function test_tangent()
 
 end
 
+#function compute_jacobian()
+
+
+	u0 = rand(4)
+	u0[4] *= T
+	epsi = 1.e-8
+	Jacu = zeros(4,4)
+	Jacu[:,1] = (Step(u0 + epsi*[1.0,0.0,0.0,0.0],s0,1) - 
+				Step(u0 - epsi*[1.0,0.0,0.0,0.0],s0,1))/
+				(2.0*epsi)
+
+  	Jacu[:,2] = (Step(u0 + epsi*[0.0,1.0,0.0,0.0],s0,1) - 
+				Step(u0 - epsi*[0.0,1.0,0.0,0.0],s0,1))/
+				(2.0*epsi)
+
+	Jacu[:,3] = (Step(u0 + epsi*[0.0,0.0,1.0,0.0],s0,1) - 
+				Step(u0 - epsi*[1.0,0.0,0.0,0.0],s0,1))/
+				(2.0*epsi)
+
+	Jacu[:,4] = (Step(u0 + epsi*[0.0,0.0,0.0,1.0],s0,1) - 
+				Step(u0 - epsi*[0.0,0.0,0.0,1.0],s0,1))/
+				(2.0*epsi)
+
+	dFds1 = (Step(u0,s0 + epsi*[1.0,0.0],1)-Step(u0,s0
+			- epsi*[1.0,0.0],1))/(2.0*epsi)	
+
+
+	dFds2 = (Step(u0,s0 + epsi*[0.0,1.0],1)-Step(u0,s0
+			- epsi*[0.0,1.0],1))/(2.0*epsi)	
+
+	
+	v0 = rand(4)
+	v0_fd = v0 + dt*Jacu*v0 
+	v0_hand = tangent_step(v0,u0,s0,zeros(2))
+	println(norm(v0_fd - v0_hand))
+
+	v1_fd = v0_fd + dt*dFds1 
+	v1_hand = tangent_step(v0,u0,s0,[1.0,0.0])
+	println(norm(v1_fd - v1_hand))
+
+	v2_fd = v0_fd + dt*dFds2 
+	v2_hand = tangent_step(v0,u0,s0,[0.0,2.0])
+	println(norm(v2_fd - v2_hand))
+
+
+#end
+
+function test_adjoint()
+
+	u0 = rand(4)
+	u0[4] *= T
+	u1 = Step(u0,s0,1)
+	epsi = 1.e-5
+	obj1 = u0[1] + u1[1]
+	y1 = [1.0,0.,0.,0.]
+	y0_ana = [1.0,0.,0.,0.]
+	y0_ana += adjoint_step(y1,u0,s0,zeros(4))
+	u0pert = u0 + epsi
+	u1pert =  Step(u0pert,s0,1)
+	obj2 = u0pert[1] + u1pert[1]
+	y0_fd = (obj2 - obj1)/epsi 
+	println(norm(y0_fd-y0_ana))
+
+end
+
 #function test_testadjoint()
 	u = rand(4)
-	t = rand()
+	u[4] *= T
 	y1 = rand(4)
 	v0 = rand(4)
 	v1 = tangent_step(v0,u,s0,zeros(2))
