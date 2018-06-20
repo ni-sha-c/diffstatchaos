@@ -1,9 +1,14 @@
 include("../examples/kuznetsov.jl")
-function decompose(v,u,w0)
+function decompose_tangent(v,v0,w0)
 # Need to rewrite for general case
-	vu = dot(v,w0)*w0/(norm(w0)^2.0)		
+	vu = dot(v,w0)/dot(w0,v0)*w0
 	vs = v - vu	
 	return vs,vu
+end
+function decompose_adjoint(w,v0,w0)
+	wu = dot(w,v0)/dot(w0,v0)*w0
+	ws = w - wu
+	return wu,ws
 end
 function stableSens()
 
@@ -25,16 +30,16 @@ function stableSens()
 		u = uarr[:,i]
 		v0 = rand(3)
 		for j = 1:n_iter
-			dFds = ∂F∂s(u,s)
-			nablaFs = gradFs(u,s)
+			dfds = ∂F∂s(u,s)
+			nablafs = gradFs(u,s)
 			
 			u = Step(u,s,1)
 			gradφ = nablaφ(u,s)    
-			v0 = nablaFs*v0
+			v0 = nablafs*v0
 			v0 /= norm(v0)
 			
-			v = nablaFs*v + dFds
-			v, dFds_unstable = decompose(v, u, v0)
+			v = nablafs*v + dFds
+			v, dfds_unstable = decompose_tangent(v, u, v0)
 			dΦds_stable[i] += dot(gradφ, v)/n_iter
 		end
 	
@@ -84,30 +89,33 @@ end
 	t = linspace(binsize_t/2.0,
 			pi-binsize_t/2.0,n_bins_t)
 		
-	dFds = zeros(d,p)
-	dFds_unstable = zeros(d,p)
-	nablaFsinv = zeros(d,d)
+	dfds = zeros(d,p)
+	dfds_unstable = zeros(d,p)
+	nablafsinv = zeros(d,d)
 	gsum_mean = zeros(p)
 	gsum_history = zeros(n_steps,p)
+	ds0 = zeros(p)
+	dJ0 = zeros(d)
 	for n = 1:n_steps
 
-		dFds = ∂F∂s(u,s) 
-		nablaFs = gradFs(u,s)
-		b = ∇Fsinvcolon∂Fs∂s(u,s)
-		q = div∇Fsinv(u,s)
-		ϕhat = -1.0*q + 
-			transpose(\(nablaFs', ϕhat'))
-		v0 = nablaFs*v0
+		dfds = ∂f∂s(u,s) 
+		nablafs = gradfs(u,s)
+		q = divGradfs(u,s)
+		ϕhat = -1.0*q + nablafs*ϕhat
+		v0 = tangent_step(v0,u,s,ds0)
 		v0 /= norm(v0)
-		ϕhat = dot(ϕhat', v0) * v0'
+		w0 = adjoint_step(w0,u,s,dJ0)
+		w0 /= norm(w0) 
+		dfds, = decompose_tangent(dfds,v0,w0)
+		ϕhat, = decompose_adjoint(ϕhat,v0,w0)	
 		u = Step(u,s,1)
-		for ip=1:p
+	#=	for ip=1:p
 			
-			g[(n-1)%K+1,ip] = ϕhat*dFds_unstable[:,ip] - b[ip]   
+			g[(n-1)%K+1,ip] = ϕhat*dfds_unstable[:,ip] - b[ip]   
 			gsum_mean[ip] += sum(g[:,ip])
-			v[:,ip] = nablaFs*v[:,ip] + dFds[:,ip]
+			v[:,ip] = nablafs*v[:,ip] + dFds[:,ip]
 			gsum_history[n,ip] = sum(g[:,ip])
-			v[:,ip], dFds_unstable[:,ip] = decompose(v[:,ip], u, v0)
+			v[:,ip], dfds_unstable[:,ip] = decompose_tangent(v[:,ip], u, v0)
 			if(n>=K+Kprime+1)
 			
 				for binno_t=1:n_bins_t
@@ -126,7 +134,7 @@ end
 				end
 			end
 			
-		end
+		end =#
 	end
 	
 #=

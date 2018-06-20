@@ -79,17 +79,17 @@ function tangent_source(v0::Array{Float64,1}, u::Array{Float64,1},
 
 
 	v = copy(v0)
-	v[1] += dt*(-1.0*dcoeff2_ds1*ds[1]*x*y*y + 
+	v[1] += (-1.0*dcoeff2_ds1*ds[1]*x*y*y + 
 				dcoeff3_ds2*ds[2]*x)
-	v[2] += dt*(dcoeff2_ds1*ds[1]*y*x*x + 
+	v[2] += (dcoeff2_ds1*ds[1]*y*x*x + 
 				dcoeff3_ds2*ds[2]*y)
-	v[3] += dt*dcoeff3_ds2*ds[2]*z
+	v[3] += dcoeff3_ds2*ds[2]*z
 	
 
 	return v
 
 end
-function ∂F∂s(u::Array{Float64,1},s::Array{Float64,1})
+function ∂f∂s(u::Array{Float64,1},s::Array{Float64,1})
 
 	dfds = zeros(d,p)
 	ds1 = [1.0, 0.0]
@@ -189,7 +189,7 @@ function gradfs(u::Array{Float64,1},s::Array{Float64,1})
 
 end
 
-function divGradFs(u::Array{Float64,1},s::Array{Float64,1})
+function divGradfs(u::Array{Float64,1},s::Array{Float64,1})
 
 
 	epsi = 1.e-8			
