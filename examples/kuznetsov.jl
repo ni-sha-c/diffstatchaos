@@ -1,6 +1,6 @@
 dt = 1.e-2
 s0 = [1.0,1.0]
-d = 3
+d = 4
 p = 2
 boundaries = ones(2*d)
 boundaries[1] = -1.0
@@ -135,51 +135,54 @@ function gradFs(u::Array{Float64,1},s::Array{Float64,1})
 	dcoeff3_dy = s[2]*a*a*(-y)/r
 	dcoeff3_dz = s[2]*a*a*(-z)/r
 		
-	dFds = zeros(d,d)
+	dFdu = zeros(d,d)
 
 	dFdu[1,1] = 1.0 + dt*(-coeff2*y*y +
-					coeff3 + dcoeff3_dx)
+					coeff3 + dcoeff3_dx*x)
 
-	dFdu[1,2] = 
+	dFdu[1,2] = dt*(-1.0*coeff1 - 
+					coeff2*2.0*y*x + 
+					dcoeff3_dy*x)
+
+	dFdu[1,3] = dt*(-1.0*dcoeff1_dz*y + 
+				0.5*a*pi + dcoeff3_dz*x)
+
+
+	dFdu[1,4] = dt*(-1.0*dcoeff1_dt*y - 
+				dcoeff2_dt*x*y*y + 
+				0.5*pi*z*da_dt + 
+				dcoeff3_dt*x)
+
+	dFdu[2,1] = dt*(coeff1*0.5 + 	
+				coeff2*y*2.0*x + 
+				dcoeff3_dx*y)	 
+				 
+	dFdu[2,2] = 1.0 + dt*(coeff2*x*x + 
+				coeff3 + dcoeff3_dy*y)	
+
+	dFdu[2,3] = dt*(dcoeff1_dz*0.5*x + 
+				dcoeff3_dz*y)
+
+	dFdu[2,4] = dt*(dcoeff1_dt*0.5*x + 
+				dcoeff2_dt*y*x*x + 
+				dcoeff3_dt*y)	
+
+	dFdu[3,1] = dt*(-0.5*a*pi + dcoeff3_dx*z)
+
+	dFdu[3,2] = dt*dcoeff3_dy*z
 	
-	
-	
-	-1.0*dcoeff1_dz*y*dz - 1.0*
-				coeff1*dy - dcoeff2_ds1*ds[1]*x*y*y - 
-			 - coeff2*x*2.0*y*dy + 
-				0.5*a*pi*dz + dcoeff3_ds2*ds[2]*x + 
-				dcoeff3_dx*x*dx + 
-				dcoeff3_dy*x*dy + 
-				dcoeff3_dz*x*dz +
-				coeff3*dx - 1.0*dcoeff1_dt*y*dtime - 
-				dcoeff2_dt*x*y*y*dtime + 
-				0.5*da_dt*pi*z*dtime + 
-				dcoeff3_dt*x*dtime)
+	dFdu[3,3] = 1.0 + dt*coeff3 + 
+				dt*dcoeff3_dz*z
 
-	v[2] += dt*(coeff1*0.5*dx + 
-				dcoeff1_dz*0.5*x*dz + 
-				dcoeff2_ds1*y*x*x*ds[1] + 
-				coeff2*dy*x*x + 
-				coeff2*2.0*x*dx*y + 
-				dcoeff3_ds2*ds[2]*y + 
-				dcoeff3_dx*y*dx + 
-				dcoeff3_dy*y*dy +
-		 		dcoeff3_dz*y*dz +
-			 	coeff3*dy + dcoeff1_dt*0.5*x*dtime -
-				dcoeff2_dt*y*x*x*dtime + 
-				dcoeff3_dt*y*dtime) 
 
-	v[3] += dt*(-0.5*a*pi*dx + 
-				dcoeff3_ds2*z*ds[2] + 
-				dcoeff3_dx*z*dx + 
-				dcoeff3_dy*z*dy + 
-				dcoeff3_dz*z*dz + 
-				coeff3*dz - 
-				0.5*pi*x*da_dt*dtime + 
-				dcoeff3_dt*z*dtime)
-	 
+	dFdu[3,4] = dt*(-0.5*pi*x*da_dt + 
+				dcoeff3_dt*z)
 
-	return v
+	dFdu[4,4] = 1.0
+
+
+					
+	return dFdu
 
 
 
@@ -200,8 +203,7 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 	dtime = v0[4]
 	v = copy(v0)
 
-	σ = 0.0
-	a = 0.0	
+	
 	r2 = x^2 + y^2 + z^2	
 	r = sqrt(r2)
 		
@@ -253,7 +255,7 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 				dcoeff3_dx*y*dx + 
 				dcoeff3_dy*y*dy +
 		 		dcoeff3_dz*y*dz +
-			 	coeff3*dy + dcoeff1_dt*0.5*x*dtime -
+			 	coeff3*dy + dcoeff1_dt*0.5*x*dtime +
 				dcoeff2_dt*y*x*x*dtime + 
 				dcoeff3_dt*y*dtime) 
 
@@ -435,7 +437,7 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 			y1[1]*dt*coeff3 + 
 			y1[1]*dt*x*dcoeff3dx + 
 			y1[2]*dt*coeff1*0.5 + 
-			y1[2]*dt*y*2.0*x + 
+			y1[2]*dt*coeff2*y*2.0*x + 
 			y1[2]*dt*dcoeff3dx*y + 
 			y1[3]*dt*(-0.5)*a*pi + 
 			y1[3]*dt*z*dcoeff3dx 	
@@ -469,7 +471,7 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 			 y1[3]*dt*(-0.5)*pi*x*dadt 
 			 
 
-		
+	y0 += dJ		
 
 	return y0
 

@@ -1,15 +1,8 @@
 include("../examples/kuznetsov.jl")
 function decompose(v,u,w0)
-
-	rdir = [u[1],u[2],0.0]
-	zdir = [0.0, 0.0, 1.0]
-	w1 = zdir
-	w2 = rdir - dot(rdir,w1)*w1
-	w2 /= norm(w2)
+# Need to rewrite for general case
 	vu = dot(v,w0)*w0/(norm(w0)^2.0)		
-	vs = v - vu
-					
-	
+	vs = v - vu	
 	return vs,vu
 end
 function stableSens()
