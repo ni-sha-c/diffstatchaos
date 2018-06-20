@@ -203,8 +203,7 @@ function tangent_step(v0::Array{Float64,1},u::Array{Float64,1},
 	dtime = v0[4]
 	v = copy(v0)
 
-	σ = 0.0
-	a = 0.0	
+	
 	r2 = x^2 + y^2 + z^2	
 	r = sqrt(r2)
 		
@@ -438,7 +437,7 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 			y1[1]*dt*coeff3 + 
 			y1[1]*dt*x*dcoeff3dx + 
 			y1[2]*dt*coeff1*0.5 + 
-			y1[2]*dt*y*2.0*x + 
+			y1[2]*dt*coeff2*y*2.0*x + 
 			y1[2]*dt*dcoeff3dx*y + 
 			y1[3]*dt*(-0.5)*a*pi + 
 			y1[3]*dt*z*dcoeff3dx 	
@@ -472,7 +471,7 @@ function adjoint_step(y1::Array{Float64,1},u::Array{Float64,1},
 			 y1[3]*dt*(-0.5)*pi*x*dadt 
 			 
 
-		
+	y0 += dJ		
 
 	return y0
 
