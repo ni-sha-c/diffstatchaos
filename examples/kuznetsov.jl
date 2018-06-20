@@ -181,6 +181,7 @@ function gradFs(u::Array{Float64,1},s::Array{Float64,1})
 	dFdu[4,4] = 1.0
 
 
+
 					
 	return dFdu
 

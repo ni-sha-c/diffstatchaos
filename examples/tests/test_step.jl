@@ -108,6 +108,7 @@ function test_tangent()
 
 end
 
+
 function test_jacobian()
 
 
@@ -148,13 +149,16 @@ function test_jacobian()
 	v0_hand = tangent_step(v0,u0,s0,zeros(2))
 	println(norm(v0_fd - v0_hand))
 
+
 	v1_fd = v0_fd + dFds1 
+
 	v1_hand = tangent_step(v0,u0,s0,[1.0,0.0])
 	println(norm(v1_fd - v1_hand))
 
 	v2_fd = v0_fd + dFds2 
 	v2_hand = tangent_step(v0,u0,s0,[0.0,1.0])
 	println(norm(v2_fd - v2_hand))
+
 
 
 end
