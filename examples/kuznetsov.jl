@@ -100,7 +100,7 @@ function ∂F∂s(u::Array{Float64,1},s::Array{Float64,1})
 
 end
 
-function gradFs(u::Array{Float64,1},s::Array{Float64,1})
+function gradfs(u::Array{Float64,1},s::Array{Float64,1})
 
 	x = u[1]
 	y = u[2]
@@ -137,45 +137,45 @@ function gradFs(u::Array{Float64,1},s::Array{Float64,1})
 		
 	dFdu = zeros(d,d)
 
-	dFdu[1,1] = 1.0 + dt*(-coeff2*y*y +
+	dFdu[1,1] = (-coeff2*y*y +
 					coeff3 + dcoeff3_dx*x)
 
-	dFdu[1,2] = dt*(-1.0*coeff1 - 
+	dFdu[1,2] = (-1.0*coeff1 - 
 					coeff2*2.0*y*x + 
 					dcoeff3_dy*x)
 
-	dFdu[1,3] = dt*(-1.0*dcoeff1_dz*y + 
+	dFdu[1,3] = (-1.0*dcoeff1_dz*y + 
 				0.5*a*pi + dcoeff3_dz*x)
 
 
-	dFdu[1,4] = dt*(-1.0*dcoeff1_dt*y - 
+	dFdu[1,4] = (-1.0*dcoeff1_dt*y - 
 				dcoeff2_dt*x*y*y + 
 				0.5*pi*z*da_dt + 
 				dcoeff3_dt*x)
 
-	dFdu[2,1] = dt*(coeff1*0.5 + 	
+	dFdu[2,1] = (coeff1*0.5 + 	
 				coeff2*y*2.0*x + 
 				dcoeff3_dx*y)	 
 				 
-	dFdu[2,2] = 1.0 + dt*(coeff2*x*x + 
+	dFdu[2,2] = (coeff2*x*x + 
 				coeff3 + dcoeff3_dy*y)	
 
-	dFdu[2,3] = dt*(dcoeff1_dz*0.5*x + 
+	dFdu[2,3] = (dcoeff1_dz*0.5*x + 
 				dcoeff3_dz*y)
 
-	dFdu[2,4] = dt*(dcoeff1_dt*0.5*x + 
+	dFdu[2,4] = (dcoeff1_dt*0.5*x + 
 				dcoeff2_dt*y*x*x + 
 				dcoeff3_dt*y)	
 
-	dFdu[3,1] = dt*(-0.5*a*pi + dcoeff3_dx*z)
+	dFdu[3,1] = (-0.5*a*pi + dcoeff3_dx*z)
 
-	dFdu[3,2] = dt*dcoeff3_dy*z
+	dFdu[3,2] = dcoeff3_dy*z
 	
-	dFdu[3,3] = 1.0 + dt*coeff3 + 
-				dt*dcoeff3_dz*z
+	dFdu[3,3] = coeff3 + 
+				dcoeff3_dz*z
 
 
-	dFdu[3,4] = dt*(-0.5*pi*x*da_dt + 
+	dFdu[3,4] = (-0.5*pi*x*da_dt + 
 				dcoeff3_dt*z)
 
 	dFdu[4,4] = 1.0
@@ -187,6 +187,24 @@ function gradFs(u::Array{Float64,1},s::Array{Float64,1})
 
 
 
+end
+
+function divGradFs(u::Array{Float64,1},s::Array{Float64,1})
+
+
+	epsi = 1.e-8			
+	dgf = zeros(d)
+	v = zeros(d)
+	tmp_matrix = zeros(d,d)
+	for i = 1:d
+		v = zeros(d)
+		v[i] = 1.0
+		tmp_matrix = (gradfs(u + epsi*v,s) - 
+				 gradfs(u - epsi*v,s))/(2*epsi)
+		dgf += tmp_matrix[i,:]'
+		
+	end
+	
 end
 
 
